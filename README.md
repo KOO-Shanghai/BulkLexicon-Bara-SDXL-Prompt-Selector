@@ -12,7 +12,7 @@
 - 设置页：配置模型、LoRA、图片尺寸、ComfyUI 地址、节点 ID 和 workflow JSON。
 - iPad 预览：页面布局针对 iPad 和 Mac 做了宽度与高度自适应，不考虑手机小屏。
 
-(开始使用)[https://koo-shanghai.github.io/BulkLexicon-Bara-SDXL-Prompt-Selector/]
+开始使用([https://koo-shanghai.github.io/BulkLexicon-Bara-SDXL-Prompt-Selector/])
 
 ## 本地运行
 
