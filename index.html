@@ -1,499 +1,300 @@
-<!DOCTYPE html>
-<html lang="zh">
-
-<head>
-  <meta charset="UTF-8" />
-  <link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@700&display=swap" rel="stylesheet">
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>关键词选择器</title>
-  <style>
-    :root {
-      --primary: #000;
-      --light-bg: #f0f0f0;
-      --gray: #999;
-      --sidebar-width: 160px;
-    }
-
-    * {
-      box-sizing: border-box;
-    }
-
-    body {
-      margin: 0;
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", sans-serif;
-      background-color: var(--light-bg);
-      padding-bottom: 110px;
-      overflow-x: hidden;
-    }
-
-    header {
-      background: transparent;
-      padding: 0;
-      margin-top: 10px;
-      text-align: center;
-      font-size: 42px;
-      font-weight: 700;
-      font-family: 'Dancing Script', cursive;
-      color: #111;
-    }
-
-    /* ── Main content ── */
-    #main-content {
-      max-width: 1280px;
-      margin: 0 auto;
-      padding: 0 32px 0 32px;
-    }
-
-    /* One section per main category */
-    .cat-section {
-      margin-bottom: 40px;
-    }
-
-    .cat-title {
-      font-size: 12px;
-      font-weight: 600;
-      color: #bbb;
-      text-transform: uppercase;
-      letter-spacing: 0.08em;
-      margin: 0 0 16px 0;
-      text-align: center;
-      padding-bottom: 12px;
-      border-bottom: 1px solid #ddd;
-      margin-bottom: 24px;
-    }
-
-    /* One block per sub-category */
-    .subcat-block {
-      display: flex;
-      flex-direction: row;
-      align-items: flex-start;
-      margin-bottom: 20px;
-      gap: 0;
-    }
-
-    .sub-title {
-      font-size: 18px;
-      font-weight: 700;
-      color: #111;
-      width: 120px;
-      min-width: 120px;
-      padding-right: 12px;
-      padding-top: 4px;
-      line-height: 1.3;
-      flex-shrink: 0;
-    }
-
-    /* Cards wrap horizontally */
-    .cards-row {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 8px;
-    }
-
-    .card {
-      display: flex;
-      flex-direction: column;
-      align-items: flex-start;
-      background: white;
-      padding: 10px 14px;
-      border-radius: 10px;
-      box-shadow: 0 1px 6px rgba(0, 0, 0, 0.06);
-      transition: all 0.18s;
-      gap: 2px;
-      position: relative;
-      cursor: pointer;
-      user-select: none;
-      width: 160px;
-      height: 80px;
-      overflow: hidden;
-      justify-content: space-between;
-    }
-
-    .card:hover {
-      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
-      transform: translateY(-2px);
-    }
-
-    .card.added {
-      box-shadow: 0 0 0 2px #22c55e;
-    }
-
-
-
-
-    .toggle-container {
-      text-align: center;
-      margin-top: 40px;
-      margin-bottom: 20px;
-    }
-
-    .toggle-btn {
-      background: #eee;
-      border: 1px solid #ccc;
-      padding: 6px 12px;
-      border-radius: 16px;
-      font-size: 13px;
-      cursor: pointer;
-      color: #555;
-      font-weight: 500;
-      transition: all 0.2s;
-    }
-
-    .toggle-btn:hover {
-      background: #e0e0e0;
-      color: #000;
-    }
-
-    /* Default (EN primary) */
-    .card .keyword {
-      order: 1;
-      font-weight: 600;
-      font-size: 14px;
-      color: #000;
-      word-break: break-word;
-    }
-
-    .card .comment {
-      order: 2;
-      font-size: 11px;
-      color: #aaa;
-    }
-
-    /* Toggled (CN primary) */
-    .card.cn-primary .comment {
-      order: 1;
-      font-weight: 600;
-      font-size: 14px;
-      color: #000;
-      padding-bottom: 2px;
-    }
-
-    .card.cn-primary .keyword {
-      order: 2;
-      font-weight: 400;
-      font-size: 11px;
-      color: #aaa;
-    }
-
-
-
-
-    /* ── Tooltip ── */
-    #mouse-tooltip {
-      position: fixed;
-      background: rgba(0, 0, 0, 0.85);
-      color: #fff;
-      padding: 6px 12px;
-      border-radius: 6px;
-      font-size: 13px;
-      white-space: nowrap;
-      pointer-events: none;
-      z-index: 9999;
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
-      display: none;
-    }
-
-    /* ── Bottom bar ── */
-    #bottom-bar {
-      position: fixed;
-      bottom: 20px;
-      left: 50%;
-      transform: translateX(-50%);
-      width: 1380px;
-      max-width: calc(100% - 40px);
-      background: white;
-      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
-      border-radius: 16px;
-      padding: 12px 20px;
-      display: flex;
-      align-items: center;
-      gap: 16px;
-      z-index: 200;
-    }
-
-    #tags-container {
-      flex: 1;
-      display: flex;
-      flex-wrap: wrap;
-      gap: 8px;
-      max-height: 100px;
-      overflow-y: auto;
-      align-items: center;
-    }
-
-    .empty-placeholder {
-      color: #aaa;
-      font-size: 14px;
-      font-style: italic;
-    }
-
-    .tag-item {
-      background: #f2f2f2;
-      font-size: 13px;
-      padding: 4px 8px 4px 12px;
-      border-radius: 16px;
-      display: flex;
-      align-items: center;
-      gap: 5px;
-      color: #333;
-      border: 1px solid #e0e0e0;
-      animation: popIn 0.2s ease-out;
-    }
-
-    .tag-comment {
-      color: #888;
-      font-size: 11px;
-    }
-
-    @keyframes popIn {
-      0% {
-        transform: scale(0.8);
-        opacity: 0;
-      }
-
-      100% {
-        transform: scale(1);
-        opacity: 1;
-      }
-    }
-
-    .tag-remove {
-      cursor: pointer;
-      color: #999;
-      font-size: 15px;
-      width: 18px;
-      height: 18px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      border-radius: 50%;
-      transition: all 0.2s;
-    }
-
-    .tag-remove:hover {
-      background: #ddd;
-      color: #000;
-    }
-
-    #copy-tags-btn {
-      padding: 10px 20px;
-      background-color: #000;
-      color: white;
-      border: none;
-      border-radius: 8px;
-      cursor: pointer;
-      transition: all 0.3s ease;
-      font-weight: 600;
-      font-size: 14px;
-      white-space: nowrap;
-    }
-
-    #copy-tags-btn:hover:not(.disabled) {
-      background-color: #333;
-    }
-
-    #copy-tags-btn.disabled {
-      background-color: #ccc;
-      color: #fff;
-      cursor: not-allowed;
-    }
-  </style>
-</head>
-
-<body>
-  <div id="mouse-tooltip"></div>
-  <div id="bottom-bar">
-    <div id="tags-container">
-      <div class="empty-placeholder">点击关键词以添加</div>
-    </div>
-    <button id="copy-tags-btn" class="disabled" disabled>复制Prompt</button>
-  </div>
-
-  <div id="main-content">
-    <header>Bara prompts 💪</header>
-    <div class="toggle-container">
-      <button id="lang-toggle-btn" class="toggle-btn">切换: 英文为主</button>
-    </div>
-    <div id="contentArea"></div>
-  </div>
-
-  <script src="data.js"></script>
-  <script>
-    const contentArea = document.getElementById("contentArea");
-    const sidebar = document.getElementById("sidebar");
-
-    // ── Permanent delete via localStorage ──
-    let deletedKeywords = new Set(JSON.parse(localStorage.getItem('deleted_keywords') || '[]'));
-
-
-    // ── Render all content ──
-    function renderContent() {
-      contentArea.innerHTML = '';
-
-      for (let cat in data) {
-        const section = document.createElement("section");
-        section.className = "cat-section";
-        section.id = "cat-" + cat;
-
-        const catTitle = document.createElement("h2");
-        catTitle.className = "cat-title";
-        catTitle.textContent = cat;
-        section.appendChild(catTitle);
-
-        const subs = data[cat];
-        for (let sub in subs) {
-          const items = subs[sub].filter(item => !deletedKeywords.has(item.keyword));
-          if (items.length === 0) continue;
-
-          const subBlock = document.createElement("div");
-          subBlock.className = "subcat-block";
-
-          const subTitle = document.createElement("h3");
-          subTitle.className = "sub-title";
-          subTitle.textContent = sub;
-          subBlock.appendChild(subTitle);
-
-          const row = document.createElement("div");
-          row.className = "cards-row";
-
-          items.forEach(item => {
-            const card = document.createElement("div");
-            card.className = "card";
-            if (cnPrimary) card.classList.add("cn-primary");
-            if (selectedTags.some(t => t.keyword === item.keyword)) card.classList.add('added');
-            if (item.remark) card.setAttribute("data-tooltip", item.remark);
-
-            card.onclick = () => {
-              const index = selectedTags.findIndex(t => t.keyword === item.keyword);
-              if (index === -1) {
-                selectedTags.push({ keyword: item.keyword, comment: item.comment });
-                card.classList.add('added');
-              } else {
-                selectedTags.splice(index, 1);
-                card.classList.remove('added');
-              }
-              updateBottomBar();
-            };
-
-            const commentEl = document.createElement("div");
-            commentEl.className = "comment";
-            commentEl.textContent = item.comment;
-
-            const keywordEl = document.createElement("div");
-            keywordEl.className = "keyword";
-            keywordEl.textContent = item.keyword;
-
-            card.appendChild(commentEl);
-            card.appendChild(keywordEl);
-            row.appendChild(card);
-          });
-
-          subBlock.appendChild(row);
-          section.appendChild(subBlock);
-        }
-
-        contentArea.appendChild(section);
-      }
-    }
-
-    // ── Bottom bar ──
-    let selectedTags = [];
-    const bottomBar = document.getElementById("bottom-bar");
-    const tagsContainer = document.getElementById("tags-container");
-    const copyTagsBtn = document.getElementById("copy-tags-btn");
-
-    function updateBottomBar() {
-      tagsContainer.innerHTML = '';
-      if (selectedTags.length > 0) {
-        copyTagsBtn.classList.remove("disabled");
-        copyTagsBtn.disabled = false;
-        selectedTags.forEach((tagObj, index) => {
-          const tagEl = document.createElement("div");
-          tagEl.className = "tag-item";
-          const textSpan = document.createElement("span");
-          textSpan.textContent = tagObj.keyword;
-          const commentSpan = document.createElement("span");
-          commentSpan.className = "tag-comment";
-          commentSpan.textContent = `(${tagObj.comment})`;
-          const removeBtn = document.createElement("span");
-          removeBtn.className = "tag-remove";
-          removeBtn.textContent = "×";
-          removeBtn.onclick = (e) => {
-            e.stopPropagation();
-            selectedTags.splice(index, 1);
-            // Remove green border from corresponding card if it exists in current view
-            contentArea.querySelectorAll('.card.added').forEach(c => {
-              if (c.querySelector('.keyword') && c.querySelector('.keyword').textContent === tagObj.keyword) {
-                c.classList.remove('added');
-              }
-            });
-            updateBottomBar();
-          };
-          tagEl.appendChild(textSpan);
-          tagEl.appendChild(commentSpan);
-          tagEl.appendChild(removeBtn);
-          tagsContainer.appendChild(tagEl);
-        });
-      } else {
-        copyTagsBtn.classList.add("disabled");
-        copyTagsBtn.disabled = true;
-        const placeholder = document.createElement("div");
-        placeholder.className = "empty-placeholder";
-        placeholder.textContent = "点击关键词以添加";
-        tagsContainer.appendChild(placeholder);
-      }
-    }
-
-    copyTagsBtn.onclick = () => {
-      if (selectedTags.length === 0) return;
-      const textToCopy = selectedTags.map(t => t.keyword).join(", ");
-      navigator.clipboard.writeText(textToCopy).then(() => {
-        const orig = copyTagsBtn.textContent;
-        copyTagsBtn.textContent = "已复制!";
-        setTimeout(() => { copyTagsBtn.textContent = orig; }, 1200);
-      });
-    };
-
-
-    // ── Lang Toggle ──
-    const toggleBtn = document.getElementById("lang-toggle-btn");
-    let cnPrimary = false;
-    toggleBtn.onclick = () => {
-      cnPrimary = !cnPrimary;
-      toggleBtn.textContent = cnPrimary ? "切换: 中文为主" : "切换: 英文为主";
-      document.querySelectorAll('.card').forEach(c => {
-        c.classList.toggle('cn-primary', cnPrimary);
-      });
-    };
-
-    // ── Tooltip ──
-    const tooltipEl = document.getElementById('mouse-tooltip');
-    let tooltipVisible = false;
-    document.addEventListener('mouseover', (e) => {
-      const card = e.target.closest('.card[data-tooltip]');
-      if (card) {
-        tooltipEl.textContent = card.getAttribute('data-tooltip');
-        tooltipEl.style.display = 'block';
-        tooltipVisible = true;
-      }
-    });
-    document.addEventListener('mousemove', (e) => {
-      if (tooltipVisible) {
-        tooltipEl.style.left = (e.clientX + 15) + 'px';
-        tooltipEl.style.top = (e.clientY + 15) + 'px';
-      }
-    });
-    document.addEventListener('mouseout', (e) => {
-      const card = e.target.closest('.card[data-tooltip]');
-      if (card && (!e.relatedTarget || !card.contains(e.relatedTarget))) {
-        tooltipEl.style.display = 'none';
-        tooltipVisible = false;
-      }
-    });
-
-    // ── Init ──
-    renderContent();
-  </script>
-</body>
-
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
+    <title>Bara Prompt Generator</title>
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <main class="app-shell">
+      <section class="page page-active" id="page-keywords" aria-label="生成">
+        <header class="topbar">
+          <div>
+            <h1>生成</h1>
+            <p id="library-count">读取词库中</p>
+          </div>
+        </header>
+
+        <section class="keyword-tab-panel active" id="keyword-tab-selector">
+          <section class="keyword-workbench">
+            <aside class="category-rail" aria-label="关键词分类" id="category-list"></aside>
+            <section class="keyword-panel">
+              <div class="subcategory-tabs" id="subcategory-tabs"></div>
+              <div class="keyword-grid" id="keyword-grid"></div>
+            </section>
+          </section>
+
+          <section class="custom-prompt-panel" aria-label="自定义添加关键词">
+            <textarea id="custom-prompt" spellcheck="false" placeholder="自定义添加关键词，用英文逗号分隔"></textarea>
+          </section>
+        </section>
+
+        <section class="keyword-tab-panel" id="keyword-tab-defaults">
+          <div class="default-prompt-panel">
+            <article class="prompt-box">
+              <div class="prompt-box-head">
+                <strong>默认正面提示词</strong>
+                <button class="ghost-button" data-copy-default="positive" type="button">复制</button>
+              </div>
+              <textarea id="default-positive-prompt" spellcheck="false" placeholder="这里填写每次生成都会加入的正面提示词"></textarea>
+            </article>
+            <article class="prompt-box">
+              <div class="prompt-box-head">
+                <strong>默认负面提示词</strong>
+                <button class="ghost-button" data-copy-default="negative" type="button">复制</button>
+              </div>
+              <textarea id="default-negative-prompt" spellcheck="false" placeholder="这里填写每次生成都会加入的负面提示词"></textarea>
+            </article>
+          </div>
+        </section>
+      </section>
+
+      <section class="page" id="page-history" aria-label="图像历史">
+        <header class="topbar simple">
+          <div>
+            <h1>图像历史</h1>
+            <p id="history-count">暂无图片</p>
+          </div>
+        </header>
+        <div class="history-panel">
+          <div class="history-empty" id="history-empty">
+            <h2>还没有生成结果</h2>
+            <p>点「生成」后，完成的图片会出现在这里。</p>
+          </div>
+          <div class="history-grid" id="history-grid"></div>
+        </div>
+      </section>
+
+      <section class="page" id="page-settings" aria-label="设置">
+        <header class="topbar simple">
+          <div>
+            <h1>设置</h1>
+            <p>模型、LoRA、尺寸和 ComfyUI 节点。</p>
+          </div>
+        </header>
+        <div class="settings-grid">
+          <section class="settings-tab-panel active" id="settings-tab-model">
+            <div class="model-settings-grid">
+              <section class="settings-card">
+                <div class="settings-section-head">
+                  <strong>模型选择</strong>
+                </div>
+              <label class="setting-field">
+                <span>模型</span>
+                <select id="model-select">
+                  <option value="">默认 wai</option>
+                </select>
+              </label>
+              </section>
+              <section class="settings-card">
+                <div class="settings-section-head">
+                  <strong>LoRA 1</strong>
+                </div>
+                  <label class="setting-field">
+                    <span>LoRA 模型</span>
+                    <select id="lora-1-select">
+                      <option value="">默认 flat_style</option>
+                    </select>
+                  </label>
+                  <label class="setting-field">
+                    <span>强度</span>
+                    <input id="lora-1-strength" type="number" min="-2" max="2" step="0.05" placeholder="0.3" />
+                  </label>
+              </section>
+              <section class="settings-card">
+                <div class="settings-section-head">
+                  <strong>LoRA 2</strong>
+                </div>
+                  <label class="setting-field">
+                    <span>LoRA 模型</span>
+                    <select id="lora-2-select">
+                    <option value="">默认 semi_realistic</option>
+                    </select>
+                  </label>
+                  <label class="setting-field">
+                    <span>强度</span>
+                    <input id="lora-2-strength" type="number" min="-2" max="2" step="0.05" placeholder="0.7" />
+                  </label>
+              </section>
+            </div>
+            <section class="settings-card">
+              <div class="settings-section-head">
+                <strong>图片尺寸</strong>
+              </div>
+              <div class="size-preset-grid" id="size-preset-grid" role="radiogroup" aria-label="常用尺寸"></div>
+              <div class="setting-row">
+                <label class="setting-field">
+                  <span>宽</span>
+                  <input id="image-width" type="number" min="64" max="4096" step="8" placeholder="1024" />
+                </label>
+                <label class="setting-field">
+                  <span>高</span>
+                  <input id="image-height" type="number" min="64" max="4096" step="8" placeholder="1024" />
+                </label>
+              </div>
+            </section>
+          </section>
+
+          <section class="settings-tab-panel" id="settings-tab-nodes">
+          <section class="settings-card">
+            <div class="settings-section-head">
+              <strong>节点与链接</strong>
+              <div class="settings-actions">
+                <button class="ghost-button" id="load-default-workflow" type="button">载入默认</button>
+                <button class="ghost-button" id="test-comfy" type="button">测试连接</button>
+                <button class="ghost-button" id="refresh-comfy-resources" type="button">刷新模型/LoRA</button>
+              </div>
+            </div>
+            <label class="setting-field">
+              <span>ComfyUI 地址</span>
+              <input id="comfy-url" type="url" value="http://192.168.101.43:8000" spellcheck="false" />
+            </label>
+          </section>
+          <section class="settings-card">
+            <div class="settings-section-head">
+              <strong>提示词与基础节点</strong>
+            </div>
+            <div class="setting-row">
+              <label class="setting-field">
+                <span>正面提示词节点 ID</span>
+                <input id="positive-node-id" type="text" placeholder="例如 6" spellcheck="false" />
+              </label>
+              <label class="setting-field">
+                <span>负面提示词节点 ID</span>
+                <input id="negative-node-id" type="text" placeholder="例如 7" spellcheck="false" />
+              </label>
+            </div>
+            <div class="setting-row">
+              <label class="setting-field">
+                <span>模型节点 ID</span>
+                <input id="model-node-id" type="text" placeholder="例如 4" spellcheck="false" />
+              </label>
+              <label class="setting-field">
+                <span>尺寸节点 ID</span>
+                <input id="size-node-id" type="text" placeholder="例如 5" spellcheck="false" />
+              </label>
+            </div>
+          </section>
+          <section class="settings-card">
+            <div class="settings-section-head">
+              <strong>LoRA 节点</strong>
+            </div>
+            <div class="lora-settings">
+              <section class="lora-card">
+                <strong>LoRA 1</strong>
+                <label class="setting-field">
+                  <span>节点 ID</span>
+                  <input id="lora-1-node-id" type="text" placeholder="例如 11" spellcheck="false" />
+                </label>
+              </section>
+              <section class="lora-card">
+                <strong>LoRA 2</strong>
+                <label class="setting-field">
+                  <span>节点 ID</span>
+                  <input id="lora-2-node-id" type="text" placeholder="例如 12" spellcheck="false" />
+                </label>
+              </section>
+            </div>
+          </section>
+          <section class="settings-card">
+            <label class="setting-field workflow-field">
+              <span>Workflow API JSON</span>
+              <textarea id="workflow-json" spellcheck="false" placeholder="粘贴从 ComfyUI 导出的 API workflow JSON"></textarea>
+            </label>
+            <p class="status-line" id="comfy-status">尚未测试连接</p>
+          </section>
+          </section>
+        </div>
+      </section>
+    </main>
+
+    <nav class="side-nav" aria-label="主菜单">
+      <button class="nav-button active" data-page="keywords" type="button">
+        <span class="nav-icon">🕝</span>
+        <span>生成</span>
+      </button>
+      <button class="nav-button" data-page="history" type="button">
+        <span class="nav-icon">📝</span>
+        <span>历史</span>
+      </button>
+      <button class="nav-button" data-page="settings" type="button">
+        <span class="nav-icon">⚙️</span>
+        <span>设置</span>
+      </button>
+    </nav>
+
+    <aside class="keyword-side-tabs" role="tablist" aria-label="生成功能">
+      <button class="mode-button active" data-keyword-tab="selector" type="button">
+        <span>选择</span>
+        <span>提示词</span>
+      </button>
+      <button class="mode-button" data-keyword-tab="defaults" type="button">
+        <span>默认</span>
+        <span>正负面</span>
+      </button>
+    </aside>
+
+    <aside class="settings-side-tabs" role="tablist" aria-label="设置功能">
+      <button class="mode-button active" data-settings-tab="model" type="button">
+        <span>模型</span>
+        <span>设置</span>
+      </button>
+      <button class="mode-button" data-settings-tab="nodes" type="button">
+        <span>节点</span>
+        <span>链接</span>
+      </button>
+    </aside>
+
+    <aside class="action-side-tabs" aria-label="生成操作">
+      <div class="action-group queue-group">
+        <div class="progress-bar" id="queue-progress" style="--progress: 0">
+          <span></span>
+        </div>
+        <span id="queue-pending" class="queue-pending">待生成 0</span>
+        <button class="ghost-button queue-button" id="stop-all" type="button" disabled>停止所有</button>
+        <button class="ghost-button queue-button" id="clear-queue" type="button" disabled>停止后续</button>
+      </div>
+      <div class="action-group batch-control" aria-label="批量生成数量">
+        <div class="batch-buttons">
+          <button class="ghost-button icon-button" id="increase-batch" type="button">+</button>
+          <button class="ghost-button icon-button" id="decrease-batch" type="button">-</button>
+        </div>
+        <button class="primary-button" id="generate-image" type="button">生成1</button>
+      </div>
+      <div class="action-group keyword-action-group">
+        <button class="ghost-button" id="copy-selected" type="button">复制关键词</button>
+      </div>
+      <div class="action-group keyword-action-group">
+        <button class="ghost-button" id="clear-selected" type="button">清空关键词</button>
+      </div>
+    </aside>
+
+    <dialog class="image-dialog" id="image-dialog">
+      <div class="image-dialog-shell">
+        <div class="image-dialog-media">
+          <img id="image-dialog-img" alt="" />
+        </div>
+        <aside class="image-dialog-details">
+          <div class="settings-section-head">
+            <strong id="image-dialog-title">生成详情</strong>
+            <button class="ghost-button" id="close-image-dialog" type="button">关闭</button>
+          </div>
+          <a class="primary-button save-link" id="save-image-link" href="#" download>保存</a>
+          <dl class="image-meta">
+            <dt>时间</dt>
+            <dd id="image-dialog-time"></dd>
+            <dt>Prompt ID</dt>
+            <dd id="image-dialog-prompt-id"></dd>
+            <dt>正面提示词</dt>
+            <dd id="image-dialog-positive"></dd>
+            <dt>负面提示词</dt>
+            <dd id="image-dialog-negative"></dd>
+          </dl>
+        </aside>
+      </div>
+    </dialog>
+
+    <script type="module" src="./app.js"></script>
+  </body>
 </html>
